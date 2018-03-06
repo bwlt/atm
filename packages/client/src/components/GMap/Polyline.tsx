@@ -12,7 +12,7 @@ export default class GMapPolyline extends React.Component<Props> {
     this.polyline = new google.maps.Polyline({
       path: this.props.path,
       geodesic: true,
-      strokeColor: '#FF0000',
+      strokeColor: this.props.strokeColor,
       strokeOpacity: 1.0,
       strokeWeight: 2
     })

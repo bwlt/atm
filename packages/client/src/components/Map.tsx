@@ -12,6 +12,7 @@ import Input from './Input'
 import Layout from './Layout'
 import Row from './Row'
 import StopMarker from './StopMarker'
+import StopMarkerContent from './StopMarkerContent'
 
 interface JourneyPattern {
   Id: string,
@@ -83,9 +84,11 @@ class Map extends React.Component<Props, State> {
     })
   }
 
-  private journeyPatternsFilter = (jp: JourneyPattern) =>
-    jp.Line.LineDescription.toLowerCase()
+  private journeyPatternsFilter = (jp: JourneyPattern) => {
+    if (this.state.checkedLines[jp.Id] === true) return true
+    return jp.Line.LineDescription.toLowerCase()
       .includes(this.state.inputValue.toLowerCase())
+  }
 
   render() {
     return (
@@ -149,7 +152,7 @@ class Map extends React.Component<Props, State> {
                       return (
                         <StopMarker
                           key={idx}
-                          content={<h2>{stop.Description}</h2>}
+                          content={<StopMarkerContent stopID={stop.Code} />}
                           stop={stop}
                           map={map}
                         />
@@ -160,6 +163,7 @@ class Map extends React.Component<Props, State> {
                         key={idx}
                         map={map}
                         path={segment.Points.map(({ X, Y }) => ({ lat: Y, lng: X }))}
+                        strokeColor={segment.RGB}
                       />
                     ))}
                   </>

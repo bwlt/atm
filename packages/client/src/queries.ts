@@ -20,9 +20,11 @@ export const JOURNEY_PATTERN = gql`
             X
             Y
           }
+          RGB
         }
       }
       Stops {
+        Code
         Description
         Location {
           X
@@ -39,10 +41,12 @@ export interface JourneyPatternResponse {
         Points: Array<{
           X: number,
           Y: number
-        }>
+        }>,
+        RGB: string
       }>
     },
     Stops: Array<{
+      Code: string,
       Description: string,
       Location: {
         X: number,
@@ -52,15 +56,25 @@ export interface JourneyPatternResponse {
   }
 }
 
-// const STOP = gql`
-//   query STOP($stopID: ID!) {
-//     stop(id: $stopID) {
-//       Lines {
-//         Line {
-//           LineDescription
-//         }
-//         WaitMessage
-//       }
-//     }
-//   }
-// `
+export const STOP = gql`
+  query STOP($stopID: ID!) {
+    stop(id: $stopID) {
+      Lines {
+        Line {
+          LineDescription
+        }
+        WaitMessage
+      }
+    }
+  }
+`
+export interface StopResponse {
+  stop: {
+    Lines: Array<{
+      Line: {
+        LineDescription: string
+      },
+      WaitMessage: string
+    }>
+  }
+}

@@ -1,5 +1,7 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
+import ApolloClient from 'apollo-boost'
+import { withApollo, ApolloProvider } from 'react-apollo'
 
 import { JourneyPatternResponse } from '../queries'
 import GMap from './GMap'
@@ -11,28 +13,23 @@ interface Props {
   stop: JourneyPatternResponse['journeyPattern']['Stops'][0]
 }
 
-class StopMarker extends React.Component<Props> {
+interface InjectedProps extends Props {
+  client: ApolloClient<any>
+}
+
+class StopMarker extends React.Component<InjectedProps> {
   infoWindow: null | google.maps.InfoWindow = null
   marker: null | google.maps.Marker = null
   container: HTMLDivElement
 
-  constructor(props: Props) {
+  constructor(props: InjectedProps) {
     super(props)
     this.container = document.createElement('div')
   }
 
-  componentWillMount() {
-    const element = this.props.content
-    ReactDOM.render(element, this.container)
-    this.infoWindow = new google.maps.InfoWindow({
-      content: this.container
-    })
-  }
-
   componentDidMount() {
-    const { marker, infoWindow } = this
-    if (marker && infoWindow) {
-      marker.addListener('click', () => infoWindow.open(this.props.map, marker))
+    if (this.marker) {
+      this.marker.addListener('click', this.handleMarkerClick)
     }
   }
 
@@ -49,15 +46,33 @@ class StopMarker extends React.Component<Props> {
         ref={el => el && (this.marker = el.marker)}
         icon={{
           path: google.maps.SymbolPath.CIRCLE,
-          scale: 3,
-          fillColor: 'red',
-          strokeColor: 'red',
-          strokeWeight: 5
+          scale: 4,
+          fillColor: 'white',
+          strokeColor: 'black',
+          strokeWeight: 1,
+          fillOpacity: 1,
         }}
         position={{ lat: stop.Location.Y, lng: stop.Location.X }}
       />
     )
   }
+
+  private handleMarkerClick = () => {
+    if (this.infoWindow === null) {
+      const element = (
+        <ApolloProvider client={this.props.client}>
+          {this.props.content}
+        </ApolloProvider>
+      )
+      ReactDOM.render(element, this.container)
+      this.infoWindow = new google.maps.InfoWindow({
+        content: this.container
+      })
+    }
+    if (this.marker) {
+      this.infoWindow.open(this.props.map, this.marker)
+    }
+  }
 }
 
-export default StopMarker
+export default withApollo(StopMarker as any) as React.ComponentType<Props>
