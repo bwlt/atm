@@ -4,15 +4,23 @@
   "scripts": {
     "predev": "yarn",
     "dev": "webpack-dev-server",
-    "build": "webpack"
+    "build": "webpack -p",
+    "start": "serve build"
   },
   "license": "UNLICENSED",
+  "now": {
+    "alias": "atm-client"
+  },
+  "env": {
+    "GOOGLE_MAPS_API_KEY": "@atm-client-google-maps-key"
+  },
   "dependencies": {
     "apollo-boost": "^0.1.1",
     "graphql": "^0.13.1",
     "react": "^16.2.0",
     "react-apollo": "^2.1.0-beta.2",
     "react-dom": "^16.2.0",
+    "serve": "^6.5.2",
     "styled-components": "^3.1.6",
     "uuid": "^3.2.1",
     "whatwg-fetch": "^2.0.3"

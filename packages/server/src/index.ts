@@ -115,11 +115,16 @@ const typeDefs = `
   }
 `
 
-const resolvers = {
+interface Args { [argument: string]: any }
+interface JourneyPatternArgs extends Args {
+  id: string
+}
+
+const resolvers: any = {
   Query: {
-   journeyPatterns: (_source: never, _args: never, { models: { journeyPatterns } }: Ctx) => journeyPatterns.list(),
-   journeyPattern: (_source: never, { id }: { id: string }, { models: { journeyPatterns } }: Ctx) => journeyPatterns.get(id),
-   stop: (_source: never, { id }: { id: string }, { models: { stops } }: Ctx) => stops.get(id),
+    journeyPatterns: (_source: never, _args: never, { models: { journeyPatterns } }: Ctx) => journeyPatterns.list(),
+    journeyPattern: (_source: never, { id }: JourneyPatternArgs, { models: { journeyPatterns } }: Ctx) => journeyPatterns.get(id),
+    stop: (_source: never, { id }: JourneyPatternArgs, { models: { stops } }: Ctx) => stops.get(id),
   }
 }
 

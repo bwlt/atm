@@ -15,7 +15,7 @@ injectGlobal`
   }
 `
 
-const client = new ApolloClient({ uri: 'http://localhost:3000' })
+const client = new ApolloClient({ uri: 'https://atm-server.now.sh' })
 
 const body = document.body
 const html = body.parentNode
