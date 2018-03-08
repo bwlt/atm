@@ -10,6 +10,12 @@ export const JOURNEY_PATTERNS = gql`
     }
   }
 `
+export interface JourneyPatternSlim {
+  Id: string,
+  Line: {
+    LineDescription: string,
+  }
+}
 
 export const JOURNEY_PATTERN = gql`
   query JOURNEY_PATTERN($id: ID!) {
@@ -21,6 +27,14 @@ export const JOURNEY_PATTERN = gql`
             Y
           }
           RGB
+        }
+        BoundingBox_NE {
+          X
+          Y
+        }
+        BoundingBox_SW {
+          X
+          Y
         }
       }
       Stops {
@@ -34,26 +48,35 @@ export const JOURNEY_PATTERN = gql`
     }
   }
 `
-export interface JourneyPatternResponse {
-  journeyPattern: {
-    Geometry: {
-      Segments: Array<{
-        Points: Array<{
-          X: number,
-          Y: number
-        }>,
-        RGB: string
-      }>
-    },
-    Stops: Array<{
-      Code: string,
-      Description: string,
-      Location: {
+export interface JourneyPattern {
+  Geometry: {
+    Segments: Array<{
+      Points: Array<{
         X: number,
         Y: number
-      }
-    }>
-  }
+      }>,
+      RGB: string
+    }>,
+    BoundingBox_NE: {
+      X: number,
+      Y: number,
+    },
+    BoundingBox_SW: {
+      X: number,
+      Y: number,
+    }
+  },
+  Stops: Array<{
+    Code: string,
+    Description: string,
+    Location: {
+      X: number,
+      Y: number
+    }
+  }>
+}
+export interface JourneyPatternResponse {
+  journeyPattern: JourneyPattern
 }
 
 export const STOP = gql`
@@ -68,13 +91,14 @@ export const STOP = gql`
     }
   }
 `
+export interface Stop {
+  Lines: Array<{
+    Line: {
+      LineDescription: string
+    },
+    WaitMessage: string
+  }>
+}
 export interface StopResponse {
-  stop: {
-    Lines: Array<{
-      Line: {
-        LineDescription: string
-      },
-      WaitMessage: string
-    }>
-  }
+  stop: Stop
 }

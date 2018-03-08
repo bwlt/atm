@@ -52,6 +52,10 @@ export default class GMap extends React.Component<Props, State> {
     document.body.appendChild(googleMapsApiScriptEl)
   }
 
+  getMap() {
+    return this.state.map
+  }
+
   render() {
     const { children, ...rest } = this.props
     return (

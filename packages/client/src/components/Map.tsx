@@ -4,7 +4,7 @@ import { Query } from 'react-apollo'
 import styled from 'styled-components'
 
 import * as queries from '../queries'
-import { JourneyPatternResponse } from '../queries'
+import { JourneyPatternResponse, JourneyPattern, JourneyPatternSlim } from '../queries'
 import Checkbox from './Checkbox'
 import Col from './Col'
 import GMap from './GMap'
@@ -14,13 +14,6 @@ import Row from './Row'
 import StopMarker from './StopMarker'
 import StopMarkerContent from './StopMarkerContent'
 
-interface JourneyPattern {
-  Id: string,
-  Line: {
-    LineDescription: string
-  }
-}
-
 interface Props {
   client: ApolloClient<any>
 }
@@ -29,7 +22,7 @@ interface State {
   checkedLines: { [lineID: string]: boolean },
   inputValue: string,
   journeyPatterns: {
-    [lineID: string]: JourneyPatternResponse['journeyPattern']
+    [lineID: string]: JourneyPattern
   }
 }
 
@@ -54,11 +47,18 @@ const JourneyPatternList = styled.ul`
 `
 const JourneyPatternElement = styled.li``
 
-const milan =
-  { lat: 45.464, lng: 9.189 }
+const milan = { lat: 45.464, lng: 9.189 }
+const zoom = 13
+
+const min = (a: number, b: number): number => a < b ? a : b
+const max = (a: number, b: number): number => a > b ? a : b
+const listMin = (list: number[]) => list.reduce(min, list[0])
+const listMax = (list: number[]) => list.reduce(max, list[0])
 
 
 class Map extends React.Component<Props, State> {
+
+  map: null | google.maps.Map = null
 
   state: State = {
     checkedLines: {},
@@ -71,20 +71,53 @@ class Map extends React.Component<Props, State> {
     this.setState({ inputValue })
   }
 
-  private handleCheckboxChange = (jpID: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    const checked = event.currentTarget.checked
-    this.setState({ checkedLines: { ...this.state.checkedLines, [jpID]: checked } }, async () => {
-      if (checked && !this.state.journeyPatterns[jpID]) {
-        const jp = await this.props.client.query<JourneyPatternResponse>({
-          query: queries.JOURNEY_PATTERN,
-          variables: { id: jpID }
-        }).then(response => response.data.journeyPattern)
-        this.setState({ journeyPatterns: { ...this.state.journeyPatterns, [jpID]: jp } })
+  private centerToJourneyPattern() {
+    const allLatLngBounds = Object.keys(this.state.journeyPatterns)
+      .filter(jpID => this.state.checkedLines[jpID] === true)
+      .map(jpID => {
+        const jp = this.state.journeyPatterns[jpID]
+        const { Geometry: { BoundingBox_NE: topRight, BoundingBox_SW: bottomLeft } } = jp
+        return {
+          east:  topRight.X,
+          north: topRight.Y,
+          south: bottomLeft.Y,
+          west:  bottomLeft.X,
+        }
+      })
+    if (allLatLngBounds.length > 0) {
+      const latLngBounds = {
+        east:  listMax(allLatLngBounds.map(b => b.east)),
+        north: listMax(allLatLngBounds.map(b => b.north)),
+        south: listMin(allLatLngBounds.map(b => b.south)),
+        west:  listMin(allLatLngBounds.map(b => b.west)),
       }
-    })
+      if (this.map) {
+        this.map.fitBounds(latLngBounds)
+      }
+    }
+    else {
+      if (this.map) {
+        this.map.setCenter(milan)
+        this.map.setZoom(zoom)
+      }
+    }
   }
 
-  private journeyPatternsFilter = (jp: JourneyPattern) => {
+  private handleCheckboxChange = (jpID: string) => async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = event.currentTarget.checked
+    await new Promise(resolve => this.setState({ checkedLines: { ...this.state.checkedLines, [jpID]: checked } }, resolve))
+
+    if (checked && !this.state.journeyPatterns[jpID]) {
+      const jp = await this.props.client.query<JourneyPatternResponse>({
+        query: queries.JOURNEY_PATTERN,
+        variables: { id: jpID }
+      }).then(response => response.data.journeyPattern)
+      await new Promise(resolve => this.setState({ journeyPatterns: { ...this.state.journeyPatterns, [jpID]: jp } }, resolve))
+    }
+    this.centerToJourneyPattern()
+  }
+
+  private journeyPatternsFilter = (jp: JourneyPatternSlim) => {
     if (this.state.checkedLines[jp.Id] === true) return true
     return jp.Line.LineDescription.toLowerCase()
       .includes(this.state.inputValue.toLowerCase())
@@ -101,7 +134,7 @@ class Map extends React.Component<Props, State> {
                 if (error) return <div>Error :(</div>;
                 if (!data) return null
 
-                const jps: JourneyPattern[] = (data as any).journeyPatterns
+                const jps: JourneyPatternSlim[] = (data as any).journeyPatterns
                 const filtered = jps.filter(this.journeyPatternsFilter)
                 return (
                   <JourneyPatternSearchBox>
@@ -134,30 +167,34 @@ class Map extends React.Component<Props, State> {
           <Col>
             <GMap
               center={milan}
+              ref={el => {
+                if (!el) return
+                const map = el.getMap()
+                if (!map) return
+                this.map = map
+              }}
               style={{ width: '100%', height: '100%' }}
-              zoom={13}>
+              zoom={zoom}>
               {(map) => {
                 const checkedJourneyPatterns = Object.keys(this.state.journeyPatterns)
                   .filter(jpID => this.state.checkedLines[jpID] === true)
                   .map(jpID => this.state.journeyPatterns[jpID])
                 const segments = checkedJourneyPatterns.reduce((acc, jp) =>
                   [...acc, ...jp.Geometry.Segments]
-                , ([] as JourneyPatternResponse['journeyPattern']['Geometry']['Segments']))
+                , ([] as JourneyPattern['Geometry']['Segments']))
                 const stops = checkedJourneyPatterns.reduce((acc, jp) => {
                   return [...acc, ...jp.Stops]
-                }, ([] as JourneyPatternResponse['journeyPattern']['Stops']))
+                }, ([] as JourneyPattern['Stops']))
                 return (
                   <>
-                    {stops.map((stop, idx) => {
-                      return (
-                        <StopMarker
-                          key={idx}
-                          content={<StopMarkerContent stopID={stop.Code} />}
-                          stop={stop}
-                          map={map}
-                        />
-                      )
-                    })}
+                    {stops.map((stop, idx) => (
+                      <StopMarker
+                        key={idx}
+                        content={<StopMarkerContent stopID={stop.Code} />}
+                        stop={stop}
+                        map={map}
+                      />
+                    ))}
                     {segments.map((segment, idx) => (
                       <GMap.Polyline
                         key={idx}
