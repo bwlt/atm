@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "scripts": {
     "predev": "yarn",
-    "dev": "webpack-dev-server",
-    "build": "webpack -p",
+    "dev": "webpack-dev-server --config webpack.development.js",
+    "build": "webpack --config webpack.production.js",
     "start": "serve build"
   },
   "license": "UNLICENSED",
@@ -15,13 +15,13 @@
     "GOOGLE_MAPS_API_KEY": "@atm-client-google-maps-key"
   },
   "dependencies": {
-    "apollo-boost": "^0.1.1",
+    "apollo-boost": "^0.1.2",
     "graphql": "^0.13.1",
     "react": "^16.2.0",
     "react-apollo": "^2.1.0-beta.2",
     "react-dom": "^16.2.0",
     "serve": "^6.5.2",
-    "styled-components": "^3.1.6",
+    "styled-components": "^3.2.1",
     "uuid": "^3.2.1",
     "whatwg-fetch": "^2.0.3"
   },
@@ -29,15 +29,17 @@
     "@types/googlemaps": "^3.30.7",
     "@types/graphql": "^0.12.4",
     "@types/prop-types": "^15.5.2",
-    "@types/react": "^16.0.38",
+    "@types/react": "^16.0.40",
     "@types/react-dom": "^16.0.4",
     "@types/uuid": "^3.4.3",
-    "clean-webpack-plugin": "^0.1.18",
+    "clean-webpack-plugin": "^0.1.19",
     "dotenv": "^5.0.1",
-    "html-webpack-plugin": "^2.30.1",
-    "ts-loader": "^3.5.0",
+    "html-webpack-plugin": "^3.0.6",
+    "ts-loader": "^4.0.1",
     "typescript": "^2.7.2",
-    "webpack": "^3.11.0",
-    "webpack-dev-server": "^2.11.1"
+    "webpack": "^4.1.1",
+    "webpack-cli": "^2.0.11",
+    "webpack-dev-server": "^3.1.1",
+    "webpack-merge": "^4.1.2"
   }
 }
